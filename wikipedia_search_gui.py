@@ -8,9 +8,9 @@ import json
 import webbrowser
 from tkinter import ttk  # ttkモジュールをインポート
 from tkinter import messagebox
-from urllib.parse import quote
+from urllib.parse import quote # URLエンコード
 from datetime import datetime, timedelta
-from pathlib import Path
+from pathlib import Path # ファイルパス操作用
 
 # --- 定数 ---
 HISTORY_FILE = Path("search_history.json")
@@ -63,7 +63,7 @@ def save_history(history):
     except IOError as e:
         print(f"履歴の保存に失敗しました: {e}")
 
-def search_wikipedia():
+def search_wikipedia(event=None):
     """
     入力フィールドから検索語を取得し、
     Wikipediaの検索結果ページをブラウザで開きます。
@@ -98,6 +98,11 @@ def search_wikipedia():
     # Comboboxのリストを更新
     combo['values'] = [item['query'] for item in search_history]
 
+def on_closing(event=None):
+    """ウィンドウを閉じる際の処理"""
+    save_history(search_history)
+    window.destroy()
+
 # --- GUIのセットアップ ---
 
 # 1. メインウィンドウを作成
@@ -109,7 +114,7 @@ window.resizable(False, False) # ウィンドウサイズを固定
 # 2. 検索履歴をロード
 search_history = load_history()
 
-# 2. ウィジェット（部品）の作成
+# 3. ウィジェット（部品）の作成
 # フレームを作成してパディングを設定
 main_frame = tk.Frame(window, padx=20, pady=20)
 main_frame.pack(expand=True, fill=tk.BOTH)
@@ -119,16 +124,18 @@ label = tk.Label(main_frame, text="検索したい単語を入力または選択
 combo = ttk.Combobox(main_frame, width=38, values=[item['query'] for item in search_history])
 search_button = tk.Button(main_frame, text="検索", fg="blue", command=search_wikipedia)
 
-# 3. ウィジェットの配置
+# 4. ウィジェットの配置
 label.pack(pady=5)
 combo.pack(pady=5)
 search_button.pack(pady=10)
 
 # フォーカスを入力フィールドに設定
 combo.focus_set()
+combo.bind('<Return>', search_wikipedia) # Enterキーで検索
 
-# 4. ウィンドウが閉じられるときの処理を定義
-window.protocol("WM_DELETE_WINDOW", lambda: (save_history(search_history), window.destroy()))
+# 5. ウィンドウが閉じられるときの処理を定義
+window.protocol("WM_DELETE_WINDOW", on_closing)
+window.bind('<Escape>', on_closing) # Escキーで終了
 
-# 4. イベントループを開始（ウィンドウを表示し、ユーザーの操作を待つ）
+# 6. イベントループを開始（ウィンドウを表示し、ユーザーの操作を待つ）
 window.mainloop()
